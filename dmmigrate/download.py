@@ -140,7 +140,8 @@ def download_media_asset(asset_name, asset_properties, dst_path, fake_download=F
 
     if not fake_download:
         expected_checksum = asset_properties["checksum"] if asset_name == "source" else None
-        download_file(download_url, dst_path, checksum=expected_checksum)
+        file_size = asset_properties["file_size"]
+        download_file(download_url, dst_path, checksum=expected_checksum, file_size=file_size)
 
 def get_download_url(asset_properties):
     if "download_url" in asset_properties:
@@ -150,13 +151,18 @@ def get_download_url(asset_properties):
     else:
         raise ValueError("Undefined download url")
 
-def download_file(url, dst_path, checksum=None):
+def download_file(url, dst_path, checksum=None, file_size=None):
     content = download_from(url)
     if checksum is not None:
         response_checksum = hashlib.md5(content).hexdigest()
         if checksum != response_checksum:
             raise ValueError("Checksum mismatch: {} (expected {}) for file {} downloaded from {}".format(
                 response_checksum, checksum, dst_path, url
+            ))
+    if file_size is not None:
+        if len(content) != file_size:
+            raise ValueError("File size mismatch: {} (expected {}) for file {} downloaded from {}".format(
+                len(content), file_size, dst_path, url
             ))
 
     ensure_dirname_exists(dst_path)
