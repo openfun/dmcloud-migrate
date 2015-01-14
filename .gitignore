@@ -1,0 +1,4 @@
+dmmigrate.egg-info/
+*.pyc
+.*.swp
+env/
