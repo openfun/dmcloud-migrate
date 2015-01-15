@@ -9,29 +9,31 @@ import os
 import requests
 import sys
 
-from . import cloudkeyclient
+from . import dmcloud
 
 utf8_writer = codecs.getwriter("utf-8")
 sys.stdout = utf8_writer(sys.stdout)
 sys.stderr = utf8_writer(sys.stderr)
 
 
-def from_organisation(dm_cloud_user_id, dm_cloud_api_key, dst_path, fake_download=False):
-    dst_path = os.path.normpath(dst_path)
-    client = cloudkeyclient.Client(dm_cloud_user_id, dm_cloud_api_key)
+def everything_from_username(client, username, dst_path, fake_download=False):
     for user in client.iter_users():
-        media_json_path = check_media_json(client, user, dst_path)
-        for media in iter_media_json(media_json_path):
-            check_media(client, user, media, dst_path, fake_download=fake_download)
+        if user.name == username:
+            everything_from_user(client, user, dst_path, fake_download=fake_download)
 
-def from_university(dm_cloud_user_id, dm_cloud_api_key, path):
-    client = cloudkeyclient.Client(dm_cloud_user_id, dm_cloud_api_key)
-    for _media in client.iter_media():
-        # TODO
-        pass
+def everything_from_organisation(client, dst_path, fake_download=False):
+    for user in client.iter_users():
+        user_dst_path = os.path.join(dst_path, user.name)
+        everything_from_user(client, user, user_dst_path, fake_download=fake_download)
+
+def everything_from_user(client, user, dst_path, fake_download=False):
+    dst_path = os.path.normpath(dst_path)
+    media_json_path = check_media_json(client, user, dst_path)
+    for media in iter_media_json(media_json_path):
+        check_media(client, user, media, dst_path, fake_download=fake_download)
 
 def check_media_json(client, user, dst_path):
-    media_json_path = path_join(dst_path, user.name, "media.json")
+    media_json_path = path_join(dst_path, "media.json")
     if os.path.exists(media_json_path):
         print("-- Skipping", media_json_path)
     else:
@@ -55,14 +57,14 @@ def download_media_json(client, user, dst_path):
 def iter_media_json(path):
     with open(path) as f:
         for media in json.load(f):
-            yield cloudkeyclient.Media(media["id"], media["title"])
+            yield dmcloud.Media(media["id"], media["title"])
 
 def check_media(client, user, media, dst_path, fake_download=False):
     media_assets_json_path = check_media_assets_json(client, user, media, dst_path)
     check_media_assets(media_assets_json_path, fake_download=fake_download)
 
 def check_media_assets_json(client, user, media, dst_path):
-    media_assets_json_path = path_join(dst_path, user.name, media.title, "assets.json")
+    media_assets_json_path = path_join(dst_path, media.title, "assets.json")
     if os.path.exists(media_assets_json_path):
         print("---- Skipping", media_assets_json_path)
     else:

@@ -27,9 +27,7 @@ setup(
         },
         entry_points={
             'console_scripts': [
-                'dmdump-organisation = scripts.dump_organisation:main',
-                'dmdump-university = scripts.dump_university:main',
-                'dmdump-universities = scripts.dump_universities:main',
+                'dmdownload = scripts.download_media:main',
             ]
         },
 )
