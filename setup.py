@@ -31,7 +31,8 @@ setup(
         ],
         entry_points={
             'console_scripts': [
-                'dmdownload = scripts.download_media:main',
+                'dmdownload = scripts.download_media:download',
+                'dmsize = scripts.download_media:estimate_size',
             ]
         },
 )

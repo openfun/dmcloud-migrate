@@ -13,9 +13,12 @@ class Client(object):
             self._organisation_id = self.client.organisation.get()["id"]
         return self._organisation_id
 
-    def iter_users(self):
+    def organisation_users(self):
+        users = []
         for user in iter_results(self.client.user.search, org_id=self.organisation_id, fields=["id", "username"]):
-            yield User(user["id"], user["username"])
+            users.append(User(user["id"], user["username"]))
+        users.sort(key=lambda u: u.name)
+        return users
 
     def act_as_user(self, user):
         self.client.act_as_user(user.user_id)

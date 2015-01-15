@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import codecs
+from collections import defaultdict
 import hashlib
 import json
 import os
@@ -16,33 +17,43 @@ sys.stdout = utf8_writer(sys.stdout)
 sys.stderr = utf8_writer(sys.stderr)
 
 
-def everything_from_username(client, username, dst_path, fake_download=False):
-    for user in client.iter_users():
-        if user.name == username:
-            everything_from_user(client, user, dst_path, fake_download=fake_download)
+def everything(client, dst_path, username=None, fake_download=False):
+    for user in client.organisation_users():
+        if username is None or user.name == username:
+            client.act_as_user(user)
+            user_dst_path = get_user_dst_path(user, dst_path)
+            media_json_path = check_media_json(client, user_dst_path)
+            for media in iter_media_json(media_json_path):
+                check_media(client, media, user_dst_path, fake_download=fake_download)
 
-def everything_from_organisation(client, dst_path, fake_download=False):
-    for user in client.iter_users():
-        user_dst_path = os.path.join(dst_path, user.name)
-        everything_from_user(client, user, user_dst_path, fake_download=fake_download)
+def estimate_size(client, dst_path, username=None):
+    sizes = defaultdict(int)
+    for user in client.organisation_users():
+        if username is None or user.name == username:
+            user_dst_path = get_user_dst_path(user, dst_path)
+            media_json_path = check_media_json(client, dst_path)
+            for media in iter_media_json(media_json_path):
+                media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
+                for asset_name, asset_properties in iter_downloadable_assets(media_assets_json_path):
+                    sizes[asset_name] += asset_properties["file_size"]
+    sorted_sizes = sorted([(asset_name, size) for asset_name, size in sizes.iteritems()])
+    total_size = sum([s[1] for s in sorted_sizes])
+    sorted_sizes.append(("total", total_size))
+    return sorted_sizes
 
-def everything_from_user(client, user, dst_path, fake_download=False):
-    dst_path = os.path.normpath(dst_path)
-    media_json_path = check_media_json(client, user, dst_path)
-    for media in iter_media_json(media_json_path):
-        check_media(client, user, media, dst_path, fake_download=fake_download)
+def get_user_dst_path(user, base_path):
+    return path_join(os.path.normpath(base_path), user.name)
 
-def check_media_json(client, user, dst_path):
+def check_media_json(client, dst_path):
     media_json_path = path_join(dst_path, "media.json")
     if os.path.exists(media_json_path):
         print("-- Skipping", media_json_path)
     else:
         print("-- Creating", media_json_path)
-        download_media_json(client, user, media_json_path)
+        download_media_json(client, media_json_path)
     return media_json_path
 
-def download_media_json(client, user, dst_path):
-    client.act_as_user(user)
+def download_media_json(client, dst_path):
     media = [
         {
             "id": media.media_id,
@@ -59,21 +70,20 @@ def iter_media_json(path):
         for media in json.load(f):
             yield dmcloud.Media(media["id"], media["title"])
 
-def check_media(client, user, media, dst_path, fake_download=False):
-    media_assets_json_path = check_media_assets_json(client, user, media, dst_path)
+def check_media(client, media, dst_path, fake_download=False):
+    media_assets_json_path = check_media_assets_json(client, media, dst_path)
     check_media_assets(media_assets_json_path, fake_download=fake_download)
 
-def check_media_assets_json(client, user, media, dst_path):
+def check_media_assets_json(client, media, dst_path):
     media_assets_json_path = path_join(dst_path, media.title, "assets.json")
     if os.path.exists(media_assets_json_path):
         print("---- Skipping", media_assets_json_path)
     else:
         print("---- Creating", media_assets_json_path)
-        download_media_assets_json(client, user, media, media_assets_json_path)
+        download_media_assets_json(client, media, media_assets_json_path)
     return media_assets_json_path
 
-def download_media_assets_json(client, user, media, dst_path):
-    client.act_as_user(user)
+def download_media_assets_json(client, media, dst_path):
     assets = client.get_assets(media)
     ensure_dirname_exists(dst_path)
     with open(dst_path, 'w') as f:
@@ -81,13 +91,17 @@ def download_media_assets_json(client, user, media, dst_path):
 
 def check_media_assets(media_assets_json_path, fake_download=False):
     dst_directory = os.path.dirname(media_assets_json_path)
+    for asset_name, asset_properties in iter_downloadable_assets(media_assets_json_path):
+        check_media_asset(asset_name, asset_properties, dst_directory, fake_download=fake_download)
+
+def iter_downloadable_assets(media_assets_json_path):
     with open(media_assets_json_path) as f:
         media_assets_json = json.load(f)
     for asset_name, asset_properties in media_assets_json.iteritems():
         if asset_name in ["abs", "abs_fa", "live"]:
             # Skip adaptive bitrate streaming or live assets
             continue
-        check_media_asset(asset_name, asset_properties, dst_directory, fake_download=fake_download)
+        yield asset_name, asset_properties
 
 def check_media_asset(asset_name, asset_properties, dst_directory, fake_download=False):
     if should_skip_asset(asset_name, asset_properties):

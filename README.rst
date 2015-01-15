@@ -17,19 +17,26 @@ Always use a virtual environment when installing python dependencies::
 Usage
 -----
 
-::
+Set up your DmCloud credentials::
 
     export DMCLOUD_USER_ID="yourdmclouduserid"
     export DMCLOUD_API_KEY="yourdmcloudapikey"
 
-    # Don't actually download the media files:
+Check how much space the download is going to take::
+
+    dmsize ./path/to/download/
+
+Download media files::
+
+    # Check everything before actually downloading:
     dmdownload --fake ./path/to/download/
 
     # Perform a full backup:
     dmdownload ./path/to/download/ 
 
     # Perform a full backup for one of your organisation's users:
-    dmdownload --user=username ./path/to/download/username/
+    dmdownload --user=username ./path/to/download/
+
 
 File system hierarchy
 ---------------------
