@@ -26,9 +26,6 @@ setup(
         include_package_data=True,
         zip_safe=False,
         install_requires=get_requirements(),
-        dependency_links=[
-            'https://github.com/dailymotion/cloudkey-py/tarball/master#egg=cloudkey',
-        ],
         entry_points={
             'console_scripts': [
                 'dmdownload = scripts.download_media:download',

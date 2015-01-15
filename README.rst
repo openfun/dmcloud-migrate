@@ -12,7 +12,7 @@ Always use a virtual environment when installing python dependencies::
 
     virtualenv venv
     source venv/bin/activate
-    pip install git+git://github.com/openfun/dmcloud-migrate.git
+    pip install git+https://github.com/openfun/dmcloud-migrate.git
 
 Usage
 -----

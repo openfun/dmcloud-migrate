@@ -1,2 +1,2 @@
 requests
-cloudkey==1.2.7
+cloudkey==1.2.6
