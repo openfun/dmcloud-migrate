@@ -31,7 +31,7 @@ def estimate_size(client, dst_path, username=None):
     for user in client.organisation_users():
         if username is None or user.name == username:
             user_dst_path = get_user_dst_path(user, dst_path)
-            media_json_path = check_media_json(client, dst_path)
+            media_json_path = check_media_json(client, user_dst_path)
             for media in iter_media_json(media_json_path):
                 media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
                 for asset_name, asset_properties in iter_downloadable_assets(media_assets_json_path):
@@ -75,7 +75,7 @@ def check_media(client, media, dst_path, fake_download=False):
     check_media_assets(media_assets_json_path, fake_download=fake_download)
 
 def check_media_assets_json(client, media, dst_path):
-    media_assets_json_path = path_join(dst_path, media.title, "assets.json")
+    media_assets_json_path = path_join(dst_path, media.title, media.media_id, "assets.json")
     if os.path.exists(media_assets_json_path):
         print("---- Skipping", media_assets_json_path)
     else:

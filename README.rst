@@ -48,10 +48,11 @@ downloaded in the following filesystem hierarchy::
         username1/
             media.json
             medianame1/
-                assets.json
-                assetname1
-                assetname2
-                ...
+                mediaid/
+                    assets.json
+                    assetname1
+                    assetname2
+                    ...
             medianame2/
                 ...
             ...
@@ -68,11 +69,13 @@ structure::
         bob/
             media.json
             My holiday video (2014)/
-                assets.json
-                jpeg_thumbnail_medium.jpg
-                mp4_h264_aac_hd.mp4
-                source.mp4
+                531594c29473991c7f21e181/
+                    assets.json
+                    jpeg_thumbnail_medium.jpg
+                    mp4_h264_aac_hd.mp4
+                    source.mp4
             Test video 42/
-                assets.json
-                jpeg_thumbnail_source.jpg
-                source.dat
+                1264cde462416235548e5f69/
+                    assets.json
+                    jpeg_thumbnail_source.jpg
+                    source.dat
