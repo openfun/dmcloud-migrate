@@ -23,10 +23,7 @@ def download():
     args = parser.parse_args()
 
     client = get_client(args.user_id, args.api_key)
-    if args.user:
-        dmmigrate.download.everything_from_username(client, args.user, args.dst, fake_download=args.fake)
-    else:
-        dmmigrate.download.everything_from_organisation(client, args.dst, fake_download=args.fake)
+    dmmigrate.download.everything(client, args.dst, username=args.user, fake_download=args.fake)
 
 def estimate_size():
     parser = argparse.ArgumentParser(description="Estimate media asset size from an organisation or university")
