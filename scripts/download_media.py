@@ -28,10 +28,22 @@ def download():
 def estimate_size():
     parser = argparse.ArgumentParser(description="Estimate media asset size from an organisation or university")
     args, client = process_parser(parser)
-    sizes = dmmigrate.download.estimate_size(client, args.dst, username=args.user)
+    user_sizes = dmmigrate.download.estimate_size(client, args.dst, username=args.user)
     print("Estimated assets size:")
-    for asset_name, size in sizes:
-        print("{: <30} {: >15} b {: >8.2f} Mb {: >8.2f} Gb".format(asset_name, size, size*1e-6, size*1e-9))
+    total = 0
+    for username, asset_sizes in sorted(user_sizes.items()):
+        user_total = 0
+        for asset_name, asset_size in sorted(asset_sizes.items()):
+            print_size_line(username, asset_name, asset_size)
+            user_total += asset_size
+        total += user_total
+        print_size_line(username, "TOTAL", user_total)
+    print_size_line("", "TOTAL", total)
+
+def print_size_line(username, asset_name, size):
+    print("{: <20} {: <30} {: >15} b {: >8.2f} Mb {: >8.2f} Gb".format(
+        username, asset_name, size, size*1e-6, size*1e-9
+    ))
 
 def process_parser(parser):
     parser.add_argument("--user-id", help=(

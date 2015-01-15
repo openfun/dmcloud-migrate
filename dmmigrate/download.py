@@ -16,29 +16,23 @@ logger = logging.getLogger(__name__)
 
 
 def everything(client, dst_path, username=None, fake_download=False):
-    for user in client.organisation_users():
-        if username is None or user.name == username:
-            client.act_as_user(user)
-            user_dst_path = get_user_dst_path(user, dst_path)
-            media_json_path = check_media_json(client, user_dst_path)
-            for media in iter_media_json(media_json_path):
-                check_media(client, media, user_dst_path, fake_download=fake_download)
+    for user in client.iter_organisation_users(username=username):
+        user_dst_path = get_user_dst_path(user, dst_path)
+        media_json_path = check_media_json(client, user_dst_path)
+        for media in iter_media_json(media_json_path):
+            check_media(client, media, user_dst_path, fake_download=fake_download)
 
 def estimate_size(client, dst_path, username=None):
-    sizes = defaultdict(int)
-    for user in client.organisation_users():
-        if username is None or user.name == username:
-            user_dst_path = get_user_dst_path(user, dst_path)
-            media_json_path = check_media_json(client, user_dst_path)
-            for media in iter_media_json(media_json_path):
-                media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
-                for asset_name, asset_properties in iter_media_assets(media_assets_json_path):
-                    sizes[asset_name] += get_asset_size(asset_properties)
-    sorted_sizes = sorted([(asset_name, size) for asset_name, size in sizes.iteritems()])
-    total_size = sum([s[1] for s in sorted_sizes])
-    sorted_sizes.append(("total", total_size))
-    return sorted_sizes
-
+    sizes = {}
+    for user in client.iter_organisation_users(username=username):
+        sizes[user.name] = defaultdict(int)
+        user_dst_path = get_user_dst_path(user, dst_path)
+        media_json_path = check_media_json(client, user_dst_path)
+        for media in iter_media_json(media_json_path):
+            media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
+            for asset_name, asset_properties in iter_media_assets(media_assets_json_path):
+                sizes[user.name][asset_name] += get_asset_size(asset_properties)
+    return sizes
 
 def get_user_dst_path(user, base_path):
     return path_join(os.path.normpath(base_path), user.name)

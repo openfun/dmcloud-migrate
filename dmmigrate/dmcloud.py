@@ -13,6 +13,12 @@ class Client(object):
             self._organisation_id = self.client.organisation.get()["id"]
         return self._organisation_id
 
+    def iter_organisation_users(self, username=None):
+        for user in self.organisation_users():
+            if username is None or username == user.name:
+                self.act_as_user(user)
+                yield user
+
     def organisation_users(self):
         users = []
         for user in iter_results(self.client.user.search, org_id=self.organisation_id, fields=["id", "username"]):
