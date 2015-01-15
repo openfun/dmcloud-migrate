@@ -1,2 +1,2 @@
 requests
-git+https://github.com/dailymotion/cloudkey-py.git@1.2.7#egg=cloudkey-py
+cloudkey==1.2.7

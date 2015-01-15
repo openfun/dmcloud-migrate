@@ -7,24 +7,28 @@ def get_long_description():
     with codecs_open('README.rst', encoding='utf-8') as f:
         return f.read()
 
+def get_requirements():
+    return [l.strip() for l in open('requirements.txt')]
+
+
 setup(
         name='dmmigrate',
-        version='0.0.1',
+        version='0.1',
         description="Migrate DMCloud videos",
         long_description=get_long_description(),
         classifiers=[],
         keywords='',
         author=u"France Université Numérique",
         author_email='regis@behmo.com',
-        url='https://github.com/openfun/dmmigrate',
+        url='https://github.com/openfun/dmcloud-migrate.git',
         license='MIT',
-        packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+        packages=find_packages(),
         include_package_data=True,
         zip_safe=False,
-        install_requires=['cloudkey==1.2.7', 'requests'],
-        extras_require={
-            'test': ['pytest'],
-        },
+        install_requires=get_requirements(),
+        dependency_links=[
+            'https://github.com/dailymotion/cloudkey-py/tarball/master#egg=cloudkey',
+        ],
         entry_points={
             'console_scripts': [
                 'dmdownload = scripts.download_media:main',
