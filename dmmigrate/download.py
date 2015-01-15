@@ -211,6 +211,3 @@ def ensure_dirname_exists(path):
 
 def json_dump(obj, f):
     return json.dump(obj, f, indent=2, sort_keys=True)
-
-def print_error(message):
-    print(message, file=sys.stderr)
