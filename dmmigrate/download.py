@@ -2,19 +2,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import codecs
 from collections import defaultdict
 import hashlib
 import json
+import logging
 import os
 import requests
-import sys
 
 from . import dmcloud
 
-utf8_writer = codecs.getwriter("utf-8")
-sys.stdout = utf8_writer(sys.stdout)
-sys.stderr = utf8_writer(sys.stderr)
+logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def everything(client, dst_path, username=None, fake_download=False):
@@ -34,8 +32,11 @@ def estimate_size(client, dst_path, username=None):
             media_json_path = check_media_json(client, user_dst_path)
             for media in iter_media_json(media_json_path):
                 media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
-                for asset_name, asset_properties in iter_downloadable_assets(media_assets_json_path):
-                    sizes[asset_name] += asset_properties["file_size"]
+                for asset_name, asset_properties in iter_media_assets(media_assets_json_path):
+                    asset_size = asset_properties.get("file_size")
+                    if asset_size is None:
+                        continue
+                    sizes[asset_name] += asset_size
     sorted_sizes = sorted([(asset_name, size) for asset_name, size in sizes.iteritems()])
     total_size = sum([s[1] for s in sorted_sizes])
     sorted_sizes.append(("total", total_size))
@@ -47,9 +48,9 @@ def get_user_dst_path(user, base_path):
 def check_media_json(client, dst_path):
     media_json_path = path_join(dst_path, "media.json")
     if os.path.exists(media_json_path):
-        print("-- Skipping", media_json_path)
+        logger.debug("-- Skipping %s", media_json_path)
     else:
-        print("-- Creating", media_json_path)
+        logger.info("-- Creating %s", media_json_path)
         download_media_json(client, media_json_path)
     return media_json_path
 
@@ -77,9 +78,9 @@ def check_media(client, media, dst_path, fake_download=False):
 def check_media_assets_json(client, media, dst_path):
     media_assets_json_path = path_join(dst_path, media.title, media.media_id, "assets.json")
     if os.path.exists(media_assets_json_path):
-        print("---- Skipping", media_assets_json_path)
+        logger.debug("---- Skipping %s", media_assets_json_path)
     else:
-        print("---- Creating", media_assets_json_path)
+        logger.info("---- Creating %s", media_assets_json_path)
         download_media_assets_json(client, media, media_assets_json_path)
     return media_assets_json_path
 
@@ -91,16 +92,16 @@ def download_media_assets_json(client, media, dst_path):
 
 def check_media_assets(media_assets_json_path, fake_download=False):
     dst_directory = os.path.dirname(media_assets_json_path)
-    for asset_name, asset_properties in iter_downloadable_assets(media_assets_json_path):
-        check_media_asset(asset_name, asset_properties, dst_directory, fake_download=fake_download)
-
-def iter_downloadable_assets(media_assets_json_path):
-    with open(media_assets_json_path) as f:
-        media_assets_json = json.load(f)
-    for asset_name, asset_properties in media_assets_json.iteritems():
+    for asset_name, asset_properties in iter_media_assets(media_assets_json_path):
         if asset_name in ["abs", "abs_fa", "live"]:
             # Skip adaptive bitrate streaming or live assets
             continue
+        check_media_asset(asset_name, asset_properties, dst_directory, fake_download=fake_download)
+
+def iter_media_assets(media_assets_json_path):
+    with open(media_assets_json_path) as f:
+        media_assets_json = json.load(f)
+    for asset_name, asset_properties in media_assets_json.iteritems():
         yield asset_name, asset_properties
 
 def check_media_asset(asset_name, asset_properties, dst_directory, fake_download=False):
@@ -109,9 +110,9 @@ def check_media_asset(asset_name, asset_properties, dst_directory, fake_download
     extension = get_file_extension(asset_name, asset_properties)
     dst_path = path_join(dst_directory, asset_name + extension)
     if os.path.exists(dst_path):
-        print("---- Skipping", dst_path)
+        logger.debug("---- Skipping %s", dst_path)
     else:
-        print("---- Creating", dst_path)
+        logger.info("---- Creating %s", dst_path)
         download_media_asset(asset_name, asset_properties, dst_path, fake_download=fake_download)
     return dst_path
 
