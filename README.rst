@@ -8,7 +8,7 @@ migrating your data to another service.
 Install
 -------
 
-Always use a virtual environment when installing python dependencies:
+Always use a virtual environment when installing python dependencies::
 
     virtualenv venv
     source venv/bin/activate
@@ -16,6 +16,8 @@ Always use a virtual environment when installing python dependencies:
 
 Usage
 -----
+
+::
 
     export DMCLOUD_USER_ID="yourdmclouduserid"
     export DMCLOUD_API_KEY="yourdmcloudapikey"
@@ -33,7 +35,7 @@ File system hierarchy
 ---------------------
 
 Whenever you perform a full backup for your organisation, the files will be
-downloaded in the following filesystem hierarchy:
+downloaded in the following filesystem hierarchy::
 
     rootpath/
         username1/
@@ -50,7 +52,8 @@ downloaded in the following filesystem hierarchy:
             ...
         ...
 
-For instance, if you have a single user named 'bob', here is a possible file structure:
+For instance, if you have a single user named 'bob', here is a possible file
+structure::
 
     $ dmdownload --user=bob ./dump/
 
