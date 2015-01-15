@@ -27,9 +27,9 @@ setup(
         },
         entry_points={
             'console_scripts': [
-                'dmdump-organisation = dmmigrate.scripts.dump_organisation:main',
-                'dmdump-university = dmmigrate.scripts.dump_university:main',
-                'dmdump-universities = dmmigrate.scripts.dump_universities:main',
+                'dmdump-organisation = scripts.dump_organisation:main',
+                'dmdump-university = scripts.dump_university:main',
+                'dmdump-universities = scripts.dump_universities:main',
             ]
         },
 )
