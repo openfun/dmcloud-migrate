@@ -33,14 +33,12 @@ def estimate_size(client, dst_path, username=None):
             for media in iter_media_json(media_json_path):
                 media_assets_json_path = check_media_assets_json(client, media, user_dst_path)
                 for asset_name, asset_properties in iter_media_assets(media_assets_json_path):
-                    asset_size = asset_properties.get("file_size")
-                    if asset_size is None:
-                        continue
-                    sizes[asset_name] += asset_size
+                    sizes[asset_name] += get_asset_size(asset_properties)
     sorted_sizes = sorted([(asset_name, size) for asset_name, size in sizes.iteritems()])
     total_size = sum([s[1] for s in sorted_sizes])
     sorted_sizes.append(("total", total_size))
     return sorted_sizes
+
 
 def get_user_dst_path(user, base_path):
     return path_join(os.path.normpath(base_path), user.name)
@@ -197,6 +195,13 @@ def download_from(url):
             break
         content += block
     return content
+
+def get_asset_size(asset_properties):
+    asset_size = asset_properties.get("file_size", 0)
+    #if "streams" in asset_properties:
+        #for stream_properties in asset_properties["streams"]:
+            #asset_size += get_asset_size(stream_properties)
+    return asset_size
 
 def path_join(basepath, *paths):
     valid_paths = [valid_path(path) for path in paths]
