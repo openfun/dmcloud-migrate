@@ -150,7 +150,7 @@ def download_media_asset(asset_name, asset_properties, dst_path, fake_download=F
     if not fake_download:
         expected_checksum = asset_properties["checksum"] if asset_name == "source" else None
         file_size = asset_properties["file_size"]
-        download_file(download_url, dst_path, checksum=expected_checksum, file_size=file_size)
+        download_file_safely(download_url, dst_path, checksum=expected_checksum, file_size=file_size)
 
 def get_download_url(asset_properties):
     if "download_url" in asset_properties:
@@ -160,35 +160,44 @@ def get_download_url(asset_properties):
     else:
         raise ValueError("Undefined download url")
 
+def download_file_safely(url, dst_path, checksum=None, file_size=None):
+    try:
+        download_file(url, dst_path, checksum=checksum, file_size=file_size)
+    except:
+        if os.path.exists(dst_path):
+            os.remove(dst_path)
+        raise
+
 def download_file(url, dst_path, checksum=None, file_size=None):
-    content = download_from(url)
+    response_checksum = hashlib.md5()
+    response_size = 0
+    ensure_dirname_exists(dst_path)
+    with open(dst_path, "wb") as f:
+        for content in iter_response_content(url):
+            response_checksum.update(content)
+            response_size += len(content)
+            f.write(content)
+
     if checksum is not None:
-        response_checksum = hashlib.md5(content).hexdigest()
+        response_checksum = response_checksum.hexdigest()
         if checksum != response_checksum:
             raise ValueError("Checksum mismatch: {} (expected {}) for file {} downloaded from {}".format(
                 response_checksum, checksum, dst_path, url
             ))
     if file_size is not None:
-        if len(content) != file_size:
+        if response_size != file_size:
             raise ValueError("File size mismatch: {} (expected {}) for file {} downloaded from {}".format(
-                len(content), file_size, dst_path, url
+                response_size, file_size, dst_path, url
             ))
 
-    ensure_dirname_exists(dst_path)
-
-    with open(dst_path, "wb") as f:
-        f.write(content)
-
-def download_from(url):
+def iter_response_content(url):
     response = requests.get(url, stream=True)
     if not response.ok:
         raise ValueError("Download error from {}".format(url))
-    content = ''
     for block in response.iter_content(1024):
         if not block:
             break
-        content += block
-    return content
+        yield block
 
 def get_asset_size(asset_properties):
     asset_size = asset_properties.get("file_size", 0)
