@@ -61,9 +61,24 @@ def download_media_json(client, dst_path):
         json_dump(media, f)
 
 def iter_media_json(path):
+    medias_to_download = get_medias_to_download()
     with open(path) as f:
         for media in json.load(f):
-            yield dmcloud.Media(media["id"], media["title"])
+            media = dmcloud.Media(media["id"], media["title"])
+            if not medias_to_download or media.media_id in medias_to_download:
+                yield media
+
+def get_medias_to_download():
+    """
+    Set the DMCLOUD_MEDIA_PATH environment variable to point to a json file to
+    load a list of medias to download.
+    """
+    medias_to_download_path = os.environ.get("DMCLOUD_MEDIA_PATH")
+    medias_to_download = None
+    if medias_to_download_path is not None:
+        with open(medias_to_download_path) as f:
+            medias_to_download = json.load(f)
+    return medias_to_download
 
 def check_media(client, media, dst_path, fake_download=False):
     media_assets_json_path = check_media_assets_json(client, media, dst_path)
