@@ -8,11 +8,13 @@ import json
 import logging
 import os
 import requests
+from time import time
 
 from . import dmcloud
 
 logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger('requests').setLevel(logging.ERROR)
 
 
 def everything(client, dst_path, username=None, fake_download=False):
@@ -172,11 +174,14 @@ def download_file(url, dst_path, checksum=None, file_size=None):
     response_checksum = hashlib.md5()
     response_size = 0
     ensure_dirname_exists(dst_path)
+    download_time = time()
     with open(dst_path, "wb") as f:
         for content in iter_response_content(url):
             response_checksum.update(content)
             response_size += len(content)
             f.write(content)
+    download_speed = (time() - download_time) /((response_size or 1)*1024*1024)
+    logger.debug("---- Download speed: %f Mb/s", download_speed)
 
     if checksum is not None:
         response_checksum = response_checksum.hexdigest()
