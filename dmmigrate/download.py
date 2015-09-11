@@ -181,7 +181,7 @@ def download_file(url, dst_path, checksum=None, file_size=None):
             response_size += len(content)
             f.write(content)
     download_speed = (time() - download_time) /((response_size or 1)*1024*1024)
-    logger.debug("---- Download speed: %f Mb/s", download_speed)
+    logger.info("---- Download speed: %f Mb/s", download_speed)
 
     if checksum is not None:
         response_checksum = response_checksum.hexdigest()
